@@ -431,12 +431,25 @@ const chartCursor = {fill:'rgba(100,100,120,0.07)'};   // subtle on both modes
 const lineCursor  = {stroke:'var(--chart-grid)'};
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+// ─── SIDEBAR ICONS ────────────────────────────────────────────────────────────
+function NavCombined() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>; }
+function NavYouTube()  { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>; }
+function NavStore()    { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>; }
+function IcoSprout()   { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 1 1.4 4.7c0 1-.5 2-1 3-1-.5-1.7-1-2-2-.4-1.5-.2-3 .2-4 .2-.6.4-1.2.4-1.7z"/></svg>; }
+function IcoZap()      { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>; }
+function IcoTruck()    { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>; }
+function IcoLeaf()     { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>; }
+function IcoBag()      { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>; }
+
+const CHANNEL_ICONS = {'yt-001': IcoSprout, 'yt-002': IcoZap, 'yt-003': IcoTruck};
+const STORE_ICONS   = {'st-001': IcoLeaf,   'st-002': IcoBag};
+
 function Sidebar({page,setPage,activeChannels,activeStores,togCh,togSt,allCh,allSt}) {
   const [collapsed,setCollapsed]=useState(false);
   const nav=[
-    {id:'combined',label:'Combined',icon:'◈',accent:'#a78bfa'},
-    {id:'youtube', label:'YouTube', icon:'▷',accent:'#f5a623'},
-    {id:'store',   label:'Store',   icon:'◻',accent:'#22d3c5'},
+    {id:'combined',label:'Combined',Icon:NavCombined,accent:'#a78bfa'},
+    {id:'youtube', label:'YouTube', Icon:NavYouTube, accent:'#f5a623'},
+    {id:'store',   label:'Store',   Icon:NavStore,   accent:'#22d3c5'},
   ];
   return (
     <aside className={`flex flex-col h-screen border-r border-border bg-surface shrink-0 transition-all duration-200 ${collapsed?'w-14':'w-56'}`}>
@@ -450,21 +463,21 @@ function Sidebar({page,setPage,activeChannels,activeStores,togCh,togSt,allCh,all
 
       {/* Nav */}
       <nav className="flex flex-col gap-0.5 p-2 border-b border-border">
-        {nav.map(({id,label,icon,accent})=>(
+        {nav.map(({id,label,Icon,accent})=>(
           <button key={id} onClick={()=>setPage(id)}
             className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-sans font-medium transition-all w-full text-left ${collapsed?'justify-center':''}`}
             style={page===id
-              ? {background:'var(--bg-card)',color:'var(--text-primary)',border:'1px solid var(--border-c)',boxShadow:`inset 0 0 0 1px ${accent}28`}
+              ? {background:'var(--bg-card)',color:'var(--text-primary)',border:'1px solid var(--border-c)'}
               : {color:'var(--text-muted)',border:'1px solid transparent'}
             }>
-            <span className="font-mono text-sm shrink-0" style={page===id?{color:accent}:{}}>{icon}</span>
+            <span className="shrink-0" style={page===id?{color:accent}:{}}><Icon/></span>
             {!collapsed&&label}
           </button>
         ))}
       </nav>
 
       {!collapsed&&(
-        <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-4">
+        <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-5">
           {/* Channels */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -473,18 +486,25 @@ function Sidebar({page,setPage,activeChannels,activeStores,togCh,togSt,allCh,all
                 {activeChannels.length===CHANNELS.length?'None':'All'}
               </button>
             </div>
-            {CHANNELS.map(ch=>(
-              <label key={ch.id} className="flex items-center gap-2 py-1.5 cursor-pointer group">
-                <span onClick={()=>togCh(ch.id)}
-                  className="flex items-center justify-center shrink-0 rounded-sm cursor-pointer transition-all"
-                  style={{width:'14px',height:'14px',
-                    background:activeChannels.includes(ch.id)?ch.color:'transparent',
-                    border:`1px solid ${activeChannels.includes(ch.id)?ch.color:'var(--border-c)'}`}}>
-                  {activeChannels.includes(ch.id)&&<svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="#0f0f11" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>}
-                </span>
-                <span className="font-sans text-xs text-muted group-hover:text-primary transition-colors truncate">{ch.avatar} {ch.name}</span>
-              </label>
-            ))}
+            <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>
+              {CHANNELS.map(ch=>{
+                const active=activeChannels.includes(ch.id);
+                const Icon=CHANNEL_ICONS[ch.id];
+                return (
+                  <button key={ch.id} onClick={()=>togCh(ch.id)}
+                    className="w-full flex items-center gap-2 px-2 rounded-md text-xs font-sans font-medium transition-all text-left"
+                    style={{
+                      padding:'6px 8px',
+                      background:active?`${ch.color}18`:'transparent',
+                      border:`1px solid ${active?ch.color+'50':'transparent'}`,
+                      color:active?ch.color:'var(--text-muted)',
+                    }}>
+                    {Icon&&<Icon/>}
+                    <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ch.name}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Stores */}
@@ -495,18 +515,25 @@ function Sidebar({page,setPage,activeChannels,activeStores,togCh,togSt,allCh,all
                 {activeStores.length===STORES.length?'None':'All'}
               </button>
             </div>
-            {STORES.map(st=>(
-              <label key={st.id} className="flex items-center gap-2 py-1.5 cursor-pointer group">
-                <span onClick={()=>togSt(st.id)}
-                  className="flex items-center justify-center shrink-0 rounded-sm cursor-pointer transition-all"
-                  style={{width:'14px',height:'14px',
-                    background:activeStores.includes(st.id)?st.color:'transparent',
-                    border:`1px solid ${activeStores.includes(st.id)?st.color:'var(--border-c)'}`}}>
-                  {activeStores.includes(st.id)&&<svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="#0f0f11" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>}
-                </span>
-                <span className="font-sans text-xs text-muted group-hover:text-primary transition-colors truncate">{st.name}</span>
-              </label>
-            ))}
+            <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>
+              {STORES.map(st=>{
+                const active=activeStores.includes(st.id);
+                const Icon=STORE_ICONS[st.id];
+                return (
+                  <button key={st.id} onClick={()=>togSt(st.id)}
+                    className="w-full flex items-center gap-2 px-2 rounded-md text-xs font-sans font-medium transition-all text-left"
+                    style={{
+                      padding:'6px 8px',
+                      background:active?`${st.color}18`:'transparent',
+                      border:`1px solid ${active?st.color+'50':'transparent'}`,
+                      color:active?st.color:'var(--text-muted)',
+                    }}>
+                    {Icon&&<Icon/>}
+                    <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{st.name}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
