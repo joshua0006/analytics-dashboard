@@ -7,7 +7,7 @@ interface Props {
   delta: number;
   trend: number[];
   accentColor: string;
-  icon?: string;
+  icon?: React.ReactNode;
 }
 
 const ArrowUp = () => (
@@ -49,7 +49,7 @@ export function StatCard({ label, value, delta, trend, accentColor, icon }: Prop
       {/* Zone 1: Label + Sparkline */}
       <div className="flex items-start justify-between gap-2 pt-1">
         <div className="flex items-center gap-1.5 min-w-0">
-          {icon && <span className="text-[13px] leading-none flex-shrink-0 select-none">{icon}</span>}
+          {icon && <span className="flex-shrink-0 select-none" style={{ color: accentColor }}>{icon}</span>}
           <span
             className="font-sans font-semibold uppercase truncate"
             style={{ fontSize: '10px', letterSpacing: '0.11em', color: 'var(--text-muted)' }}

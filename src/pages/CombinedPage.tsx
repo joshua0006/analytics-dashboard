@@ -1,6 +1,7 @@
 import { useOutletContext } from 'react-router-dom';
 import { useMemo } from 'react';
 import { parseISO, isAfter, subDays } from 'date-fns';
+import { Eye, Tv2, Package, Gem } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { StatCard } from '../components/cards/StatCard';
 import { RevenueStackedBar, RevenueDonut, DualAxisChart } from '../components/charts/RevenueCompareChart';
@@ -107,7 +108,7 @@ export function CombinedPage() {
             delta={ytMetrics.deltaViews}
             trend={ytMetrics.last7Views}
             accentColor="#f5a623"
-            icon="👁"
+            icon={<Eye size={14} />}
           />
           <StatCard
             label="YT Revenue"
@@ -115,7 +116,7 @@ export function CombinedPage() {
             delta={ytMetrics.deltaRevenue}
             trend={ytMetrics.last7Revenue}
             accentColor="#f5a623"
-            icon="📺"
+            icon={<Tv2 size={14} />}
           />
           <StatCard
             label="Store Units"
@@ -123,7 +124,7 @@ export function CombinedPage() {
             delta={storeMetrics.deltaUnits}
             trend={storeMetrics.last7Units}
             accentColor="#22d3c5"
-            icon="📦"
+            icon={<Package size={14} />}
           />
           <StatCard
             label="Total Revenue"
@@ -131,7 +132,7 @@ export function CombinedPage() {
             delta={(ytMetrics.deltaRevenue + storeMetrics.deltaRevenue) / 2}
             trend={stackedData.slice(-7).map(d => d.ytRevenue + d.storeRevenue)}
             accentColor="#a78bfa"
-            icon="💎"
+            icon={<Gem size={14} />}
           />
         </div>
 

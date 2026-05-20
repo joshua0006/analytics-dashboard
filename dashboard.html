@@ -299,6 +299,18 @@ function Sparkline({data,color,w=96,h=40}) {
   );
 }
 
+// ─── STAT CARD ICONS ──────────────────────────────────────────────────────────
+const IC = {s:'0 0 24 24', f:'none', sw:'2', slc:'round', slj:'round'};
+function IcoEye()          { return <svg width="14" height="14" viewBox={IC.s} fill={IC.f} stroke="currentColor" strokeWidth={IC.sw} strokeLinecap={IC.slc} strokeLinejoin={IC.slj}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>; }
+function IcoTv()           { return <svg width="14" height="14" viewBox={IC.s} fill={IC.f} stroke="currentColor" strokeWidth={IC.sw} strokeLinecap={IC.slc} strokeLinejoin={IC.slj}><path d="M7 21h10"/><rect x="2" y="3" width="20" height="14" rx="2"/></svg>; }
+function IcoPackage()      { return <svg width="14" height="14" viewBox={IC.s} fill={IC.f} stroke="currentColor" strokeWidth={IC.sw} strokeLinecap={IC.slc} strokeLinejoin={IC.slj}><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>; }
+function IcoGem()          { return <svg width="14" height="14" viewBox={IC.s} fill={IC.f} stroke="currentColor" strokeWidth={IC.sw} strokeLinecap={IC.slc} strokeLinejoin={IC.slj}><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>; }
+function IcoDollar()       { return <svg width="14" height="14" viewBox={IC.s} fill={IC.f} stroke="currentColor" strokeWidth={IC.sw} strokeLinecap={IC.slc} strokeLinejoin={IC.slj}><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>; }
+function IcoTrendingUp()   { return <svg width="14" height="14" viewBox={IC.s} fill={IC.f} stroke="currentColor" strokeWidth={IC.sw} strokeLinecap={IC.slc} strokeLinejoin={IC.slj}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>; }
+function IcoCreditCard()   { return <svg width="14" height="14" viewBox={IC.s} fill={IC.f} stroke="currentColor" strokeWidth={IC.sw} strokeLinecap={IC.slc} strokeLinejoin={IC.slj}><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>; }
+function IcoTarget()       { return <svg width="14" height="14" viewBox={IC.s} fill={IC.f} stroke="currentColor" strokeWidth={IC.sw} strokeLinecap={IC.slc} strokeLinejoin={IC.slj}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>; }
+function IcoCart()         { return <svg width="14" height="14" viewBox={IC.s} fill={IC.f} stroke="currentColor" strokeWidth={IC.sw} strokeLinecap={IC.slc} strokeLinejoin={IC.slj}><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>; }
+
 // ─── STAT CARD ────────────────────────────────────────────────────────────────
 function ArrowUp() {
   return <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true"><path d="M4 7V1M4 1L1 4M4 1L7 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
@@ -321,7 +333,7 @@ function StatCard({label,value,delta:d,trend,accentColor,icon}) {
         style={{background:`linear-gradient(to bottom, ${accentColor}1a, transparent)`}}/>
       <div className="flex items-start justify-between gap-2 pt-1">
         <div className="flex items-center gap-1.5 min-w-0">
-          {icon&&<span style={{fontSize:'13px',lineHeight:1,flexShrink:0,userSelect:'none'}}>{icon}</span>}
+          {icon&&<span style={{flexShrink:0,lineHeight:1,userSelect:'none',color:accentColor}}>{icon}</span>}
           <span className="font-sans font-semibold uppercase truncate"
             style={{fontSize:'10px',letterSpacing:'0.11em',color:'var(--text-muted)'}}>
             {label}
@@ -610,10 +622,10 @@ function YouTubePage({dateRange,setDateRange,activeChannels}) {
       <Header title="YouTube Analytics" subtitle="Views and revenue across all channels" dateRange={dateRange} onDateRange={setDateRange} accent="#f5a623"/>
       <div className="p-6 flex flex-col gap-5">
         <div className="grid grid-cols-3 gap-4">
-          <StatCard label="Total Views"   value={fmtNum(m.tv)}  delta={m.dv}   trend={m.l7v} accentColor="#f5a623" icon="👁"/>
-          <StatCard label="Total Revenue" value={fmtUSD(m.tr)}  delta={m.dr}   trend={m.l7r} accentColor="#f5a623" icon="💰"/>
+          <StatCard label="Total Views"   value={fmtNum(m.tv)}  delta={m.dv}   trend={m.l7v} accentColor="#f5a623" icon={<IcoEye/>}/>
+          <StatCard label="Total Revenue" value={fmtUSD(m.tr)}  delta={m.dr}   trend={m.l7r} accentColor="#f5a623" icon={<IcoDollar/>}/>
           <StatCard label="RPM"           value={'$'+m.rpm.toFixed(2)} delta={m.drpm}
-            trend={m.l7r.map((r,i)=>m.l7v[i]>0?(r/m.l7v[i])*1000:0)} accentColor="#f5a623" icon="📈"/>
+            trend={m.l7r.map((r,i)=>m.l7v[i]>0?(r/m.l7v[i])*1000:0)} accentColor="#f5a623" icon={<IcoTrendingUp/>}/>
         </div>
 
         <ChartCard title="Views Over Time" legend={chs.map(c=><LegendDot key={c.id} color={c.color} label={c.name}/>)}>
@@ -674,10 +686,10 @@ function StorePage({dateRange,setDateRange,activeStores}) {
       <Header title="Store Analytics" subtitle="Units sold, revenue and conversion across stores" dateRange={dateRange} onDateRange={setDateRange} accent="#22d3c5"/>
       <div className="p-6 flex flex-col gap-5">
         <div className="grid grid-cols-4 gap-4">
-          <StatCard label="Units Sold"    value={fmtNum(m.tu)}  delta={m.du}   trend={m.l7u} accentColor="#22d3c5" icon="📦"/>
-          <StatCard label="Revenue"       value={fmtUSD(m.tr)}  delta={m.dr}   trend={m.l7u} accentColor="#22d3c5" icon="💳"/>
-          <StatCard label="Avg Conv Rate" value={fmtPct(m.ac)}  delta={m.dc}   trend={m.l7c} accentColor="#22d3c5" icon="🎯"/>
-          <StatCard label="Avg Order Val" value={fmtUSD(m.aov)} delta={m.daov} trend={m.l7u} accentColor="#22d3c5" icon="🛒"/>
+          <StatCard label="Units Sold"    value={fmtNum(m.tu)}  delta={m.du}   trend={m.l7u} accentColor="#22d3c5" icon={<IcoPackage/>}/>
+          <StatCard label="Revenue"       value={fmtUSD(m.tr)}  delta={m.dr}   trend={m.l7u} accentColor="#22d3c5" icon={<IcoCreditCard/>}/>
+          <StatCard label="Avg Conv Rate" value={fmtPct(m.ac)}  delta={m.dc}   trend={m.l7c} accentColor="#22d3c5" icon={<IcoTarget/>}/>
+          <StatCard label="Avg Order Val" value={fmtUSD(m.aov)} delta={m.daov} trend={m.l7u} accentColor="#22d3c5" icon={<IcoCart/>}/>
         </div>
 
         <ChartCard title="Units Sold" legend={sts.map(s=><LegendDot key={s.id} color={s.color} label={s.name}/>)}>
@@ -750,10 +762,10 @@ function CombinedPage({dateRange,setDateRange,activeChannels,activeStores}) {
       <Header title="Combined Overview" subtitle="YouTube + Web Store — unified metrics" dateRange={dateRange} onDateRange={setDateRange} accent="#a78bfa"/>
       <div className="p-6 flex flex-col gap-5">
         <div className="grid grid-cols-4 gap-4">
-          <StatCard label="YT Views"     value={fmtNum(yt.tv)}   delta={yt.dv}            trend={yt.l7v}   accentColor="#f5a623"  icon="👁"/>
-          <StatCard label="YT Revenue"   value={fmtUSD(yt.tr)}   delta={yt.dr}            trend={yt.l7r}   accentColor="#f5a623"  icon="📺"/>
-          <StatCard label="Store Units"  value={fmtNum(st.tu)}   delta={st.du}            trend={st.l7u}   accentColor="#22d3c5"  icon="📦"/>
-          <StatCard label="Total Revenue"value={fmtUSD(totalRev)} delta={(yt.dr+st.dr)/2} trend={combTrend} accentColor="#a78bfa" icon="💎"/>
+          <StatCard label="YT Views"     value={fmtNum(yt.tv)}   delta={yt.dv}            trend={yt.l7v}   accentColor="#f5a623"  icon={<IcoEye/>}/>
+          <StatCard label="YT Revenue"   value={fmtUSD(yt.tr)}   delta={yt.dr}            trend={yt.l7r}   accentColor="#f5a623"  icon={<IcoTv/>}/>
+          <StatCard label="Store Units"  value={fmtNum(st.tu)}   delta={st.du}            trend={st.l7u}   accentColor="#22d3c5"  icon={<IcoPackage/>}/>
+          <StatCard label="Total Revenue"value={fmtUSD(totalRev)} delta={(yt.dr+st.dr)/2} trend={combTrend} accentColor="#a78bfa" icon={<IcoGem/>}/>
         </div>
 
         <ChartCard title="Combined Revenue — YouTube vs Store"

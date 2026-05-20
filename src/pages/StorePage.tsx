@@ -1,4 +1,5 @@
 import { useOutletContext } from 'react-router-dom';
+import { Package, CreditCard, Target, ShoppingCart } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { StatCard } from '../components/cards/StatCard';
 import { UnitsSoldChart, ConversionRateChart } from '../components/charts/StoreMetricsChart';
@@ -73,7 +74,7 @@ export function StorePage() {
             delta={metrics.deltaUnits}
             trend={metrics.last7Units}
             accentColor="#22d3c5"
-            icon="📦"
+            icon={<Package size={14} />}
           />
           <StatCard
             label="Revenue"
@@ -81,7 +82,7 @@ export function StorePage() {
             delta={metrics.deltaRevenue}
             trend={metrics.last7Units.map((u, i) => metrics.last7Conv[i] ?? 0)}
             accentColor="#22d3c5"
-            icon="💳"
+            icon={<CreditCard size={14} />}
           />
           <StatCard
             label="Avg Conv Rate"
@@ -89,7 +90,7 @@ export function StorePage() {
             delta={metrics.deltaConv}
             trend={metrics.last7Conv}
             accentColor="#22d3c5"
-            icon="🎯"
+            icon={<Target size={14} />}
           />
           <StatCard
             label="Avg Order Value"
@@ -97,7 +98,7 @@ export function StorePage() {
             delta={metrics.deltaAov}
             trend={metrics.last7Units}
             accentColor="#22d3c5"
-            icon="🛒"
+            icon={<ShoppingCart size={14} />}
           />
         </div>
 
