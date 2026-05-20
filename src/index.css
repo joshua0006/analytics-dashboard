@@ -34,6 +34,10 @@
   --accent-combined: #a78bfa;
 }
 
+html {
+  zoom: 1.2;
+}
+
 * {
   box-sizing: border-box;
 }
