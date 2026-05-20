@@ -38,6 +38,8 @@ export function StatCard({ label, value, delta, trend, accentColor, icon }: Prop
     >
       {/* Top accent bar */}
       <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: accentColor }} />
+      {/* Bottom accent bar */}
+      <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: accentColor }} />
       {/* Atmospheric bloom below bar */}
       <div
         className="absolute top-0 left-0 right-0 h-10 pointer-events-none"
