@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Analytics Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+<!-- Anti-FOUC: apply theme class before first paint -->
+<script>
+(function(){
+  var s=localStorage.getItem('ad-theme');
+  var p=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+  if((s||p)==='dark') document.documentElement.classList.add('dark');
+})();
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          /* All semantic colors reference CSS variables so they flip with the theme */
+          base:     'var(--bg-base)',
+          surface:  'var(--bg-surface)',
+          card:     'var(--bg-card)',
+          border:   'var(--border-c)',
+          primary:  'var(--text-primary)',
+          muted:    'var(--text-muted)',
+          positive: 'var(--positive)',
+          negative: 'var(--negative)',
+          /* Accent colors are identical in both modes */
+          'accent-yt':       '#f5a623',
+          'accent-store':    '#22d3c5',
+          'accent-combined': '#a78bfa',
+        },
+        fontFamily: {
+          mono: ['"IBM Plex Mono"', 'monospace'],
+          sans: ['"DM Sans"', 'sans-serif'],
+        },
+      },
+    },
+  }
+</script>
+
+<style>
+  /* ── Light mode (default) ─────────────────────── */
+  :root {
+    --bg-base:      #f0f0f5;
+    --bg-surface:   #fafafa;
+    --bg-card:      #ffffff;
+    --border-c:     #e2e2ec;
+    --text-primary: #0d0d14;
+    --text-muted:   #6b7280;
+    --positive:     #15803d;
+    --negative:     #b91c1c;
+    --chart-grid:   #e2e2ec;
+    --header-bg:    rgba(250,250,250,0.88);
+  }
+  /* ── Dark mode ────────────────────────────────── */
+  .dark {
+    --bg-base:      #0f0f11;
+    --bg-surface:   #18181c;
+    --bg-card:      #1e1e24;
+    --border-c:     #2a2a33;
+    --text-primary: #f0f0f0;
+    --text-muted:   #6b7280;
+    --positive:     #4ade80;
+    --negative:     #f87171;
+    --chart-grid:   #2a2a33;
+    --header-bg:    rgba(24,24,28,0.88);
+  }
+
+  *  { box-sizing:border-box; }
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    margin: 0;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg-surface); }
+  ::-webkit-scrollbar-thumb { background:var(--border-c); border-radius:3px; }
+  ::-webkit-scrollbar-thumb:hover { background:var(--text-muted); }
+  .fade-in { animation:fadeIn 0.3s ease both; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);} }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/prop-types@15.8.1/prop-types.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react,env">
+const { useState, useMemo, useCallback, createContext, useContext } = React;
+const {
+  ResponsiveContainer, AreaChart, Area, LineChart, Line,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell,
+} = Recharts;
+
+// ─── THEME CONTEXT ────────────────────────────────────────────────────────────
+const ThemeCtx = createContext({ isDark: true, toggle: () => {} });
+
+function ThemeProvider({ children }) {
+  const [isDark, setIsDark] = useState(
+    () => document.documentElement.classList.contains('dark')
+  );
+  const toggle = useCallback(() => {
+    setIsDark(prev => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('ad-theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('ad-theme', 'light');
+      }
+      return next;
+    });
+  }, []);
+  return <ThemeCtx.Provider value={{ isDark, toggle }}>{children}</ThemeCtx.Provider>;
+}
+
+const useTheme = () => useContext(ThemeCtx);
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const CHANNELS = [
+  { id:'yt-001', name:'GardenWithGrace', avatar:'🌿', color:'#4ade80' },
+  { id:'yt-002', name:'TechTalkDaily',   avatar:'⚡', color:'#f5a623' },
+  { id:'yt-003', name:'VanLifeVibes',    avatar:'🚐', color:'#a78bfa' },
+];
+const STORES = [
+  { id:'st-001', name:'GreenThumb Co.', color:'#22d3c5' },
+  { id:'st-002', name:'VanGear Shop',   color:'#f87171' },
+];
+
+function seededRng(seed) {
+  let s = seed;
+  return () => { s = (s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; };
+}
+function daysAgoISO(n) {
+  const d = new Date(); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10);
+}
+function genYT(cid, seed, base, rpm) {
+  const rng = seededRng(seed), out = []; let cur = base;
+  for (let i=89;i>=0;i--) {
+    cur = Math.max(base*0.3, cur+(rng()-0.48)*base*0.15);
+    const v = Math.round(cur);
+    out.push({ date:daysAgoISO(i), channelId:cid, views:v, revenue:Math.round((v/1000)*rpm*(0.85+rng()*0.3)*100)/100 });
+  }
+  return out;
+}
+function genStore(sid, seed, baseSess, baseConv, aov) {
+  const rng = seededRng(seed), out = []; let cur = baseSess;
+  for (let i=89;i>=0;i--) {
+    cur = Math.max(baseSess*0.2, cur+(rng()-0.47)*baseSess*0.12);
+    const sessions = Math.round(cur);
+    const convRate = Math.max(0.5, Math.min(8, baseConv+(rng()-0.5)*1.2));
+    const unitsSold = Math.round(sessions*convRate/100);
+    const revenue = Math.round(unitsSold*aov*(0.9+rng()*0.2)*100)/100;
+    out.push({ date:daysAgoISO(i), storeId:sid, sessions, unitsSold, revenue, conversionRate:Math.round(convRate*100)/100 });
+  }
+  return out;
+}
+
+const YT_DATA = [
+  ...genYT('yt-001',42,8500,3.2),
+  ...genYT('yt-002',137,22000,4.8),
+  ...genYT('yt-003',91,6200,2.6),
+];
+const STORE_DATA = [
+  ...genStore('st-001',77,3200,3.8,42),
+  ...genStore('st-002',213,1800,2.1,180),
+];
+
+// ─── FORMATTERS ───────────────────────────────────────────────────────────────
+const fmtNum = n => n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':Math.round(n).toLocaleString();
+const fmtUSD = n => n>=1e6?'$'+(n/1e6).toFixed(2)+'M':n>=1e3?'$'+(n/1e3).toFixed(1)+'K':'$'+n.toFixed(2);
+const fmtPct = n => n.toFixed(2)+'%';
+const fmtDelta = n => (n>=0?'+':'')+n.toFixed(1)+'%';
+const fmtDate = s => { const d=new Date(s+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); };
+
+// ─── METRICS ──────────────────────────────────────────────────────────────────
+const cutISO = r => daysAgoISO(r==='7d'?7:r==='30d'?30:90);
+const prevISO = r => { const d=r==='7d'?7:r==='30d'?30:90; return daysAgoISO(d*2); };
+const delta = (c,p) => p>0?((c-p)/p)*100:0;
+
+function useYTMetrics(range, activeChannels) {
+  return useMemo(() => {
+    const cut=cutISO(range), pcut=prevISO(range);
+    const cur=YT_DATA.filter(d=>activeChannels.includes(d.channelId)&&d.date>cut);
+    const prev=YT_DATA.filter(d=>activeChannels.includes(d.channelId)&&d.date>pcut&&d.date<=cut);
+    const tv=cur.reduce((s,d)=>s+d.views,0), tr=cur.reduce((s,d)=>s+d.revenue,0);
+    const pv=prev.reduce((s,d)=>s+d.views,0), pr=prev.reduce((s,d)=>s+d.revenue,0);
+    const rpm=tv>0?(tr/tv)*1000:0, prpm=pv>0?(pr/pv)*1000:0;
+    const dm={};
+    for (const d of cur) {
+      if (!dm[d.date]) dm[d.date]={views:0,revenue:0};
+      dm[d.date].views+=d.views; dm[d.date].revenue+=d.revenue;
+      dm[d.date]['v_'+d.channelId]=(dm[d.date]['v_'+d.channelId]||0)+d.views;
+      dm[d.date]['r_'+d.channelId]=(dm[d.date]['r_'+d.channelId]||0)+d.revenue;
+    }
+    const chartData=Object.entries(dm).sort(([a],[b])=>a.localeCompare(b)).map(([date,v])=>({date,...v}));
+    const l7v=chartData.slice(-7).map(d=>d.views);
+    const l7r=chartData.slice(-7).map(d=>d.revenue);
+    const channelBreakdown=activeChannels.map(cid=>{
+      const r=cur.filter(d=>d.channelId===cid), p=prev.filter(d=>d.channelId===cid);
+      const v=r.reduce((s,d)=>s+d.views,0), rv=r.reduce((s,d)=>s+d.revenue,0);
+      return {cid,views:v,revenue:rv,dv:delta(v,p.reduce((s,d)=>s+d.views,0)),dr:delta(rv,p.reduce((s,d)=>s+d.revenue,0))};
+    });
+    return {tv,tr,rpm,dv:delta(tv,pv),dr:delta(tr,pr),drpm:delta(rpm,prpm),chartData,l7v,l7r,channelBreakdown};
+  }, [range, activeChannels.join(',')]);
+}
+
+function useStoreMetrics(range, activeStores) {
+  return useMemo(() => {
+    const cut=cutISO(range), pcut=prevISO(range);
+    const cur=STORE_DATA.filter(d=>activeStores.includes(d.storeId)&&d.date>cut);
+    const prev=STORE_DATA.filter(d=>activeStores.includes(d.storeId)&&d.date>pcut&&d.date<=cut);
+    const tu=cur.reduce((s,d)=>s+d.unitsSold,0), tr=cur.reduce((s,d)=>s+d.revenue,0);
+    const ac=cur.length?cur.reduce((s,d)=>s+d.conversionRate,0)/cur.length:0;
+    const aov=tu>0?tr/tu:0;
+    const pu=prev.reduce((s,d)=>s+d.unitsSold,0), pr=prev.reduce((s,d)=>s+d.revenue,0);
+    const pc=prev.length?prev.reduce((s,d)=>s+d.conversionRate,0)/prev.length:0;
+    const paov=pu>0?pr/pu:0;
+    const dm={};
+    for (const d of cur) {
+      if (!dm[d.date]) dm[d.date]={units:0,revenue:0,convSum:0,cnt:0};
+      dm[d.date].units+=d.unitsSold; dm[d.date].revenue+=d.revenue;
+      dm[d.date].convSum+=d.conversionRate; dm[d.date].cnt+=1;
+      dm[d.date]['u_'+d.storeId]=(dm[d.date]['u_'+d.storeId]||0)+d.unitsSold;
+      dm[d.date]['cs_'+d.storeId]=(dm[d.date]['cs_'+d.storeId]||0)+d.conversionRate;
+      dm[d.date]['cn_'+d.storeId]=(dm[d.date]['cn_'+d.storeId]||0)+1;
+    }
+    const chartData=Object.entries(dm).sort(([a],[b])=>a.localeCompare(b)).map(([date,v])=>({
+      date,units:v.units,revenue:v.revenue,convRate:v.cnt?v.convSum/v.cnt:0,
+      ...Object.fromEntries(activeStores.map(s=>['u_'+s,v['u_'+s]||0])),
+      ...Object.fromEntries(activeStores.map(s=>['c_'+s,v['cn_'+s]?v['cs_'+s]/v['cn_'+s]:0])),
+    }));
+    const l7u=chartData.slice(-7).map(d=>d.units);
+    const l7c=chartData.slice(-7).map(d=>d.convRate);
+    const storeBreakdown=activeStores.map(sid=>{
+      const r=cur.filter(d=>d.storeId===sid), p=prev.filter(d=>d.storeId===sid);
+      const u=r.reduce((s,d)=>s+d.unitsSold,0), rv=r.reduce((s,d)=>s+d.revenue,0);
+      const c=r.length?r.reduce((s,d)=>s+d.conversionRate,0)/r.length:0;
+      return {sid,units:u,revenue:rv,convRate:c,du:delta(u,p.reduce((s,d)=>s+d.unitsSold,0)),dr:delta(rv,p.reduce((s,d)=>s+d.revenue,0)),dc:delta(c,p.length?p.reduce((s,d)=>s+d.conversionRate,0)/p.length:0)};
+    });
+    return {tu,tr,ac,aov,du:delta(tu,pu),dr:delta(tr,pr),dc:delta(ac,pc),daov:delta(aov,paov),chartData,l7u,l7c,storeBreakdown};
+  }, [range, activeStores.join(',')]);
+}
+
+// ─── SPARKLINE ────────────────────────────────────────────────────────────────
+function Sparkline({data,color,w=80,h=28}) {
+  if (!data||!data.length) return null;
+  const mn=Math.min(...data), mx=Math.max(...data), rng=mx-mn||1;
+  const pts=data.map((v,i)=>`${(i/(data.length-1))*w},${h-((v-mn)/rng)*(h-4)-2}`).join(' ');
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
+    </svg>
+  );
+}
+
+// ─── STAT CARD ────────────────────────────────────────────────────────────────
+function StatCard({label,value,delta:d,trend,accentColor,icon}) {
+  const pos=d>=0;
+  return (
+    <div className="relative overflow-hidden rounded-lg p-4 flex flex-col gap-3 border border-border bg-card"
+      style={{boxShadow:`0 0 0 1px ${accentColor}22`}}>
+      <div className="absolute top-0 left-0 right-0" style={{height:'2px',background:accentColor}}/>
+      <div className="flex items-center justify-between">
+        <span className="font-sans text-xs font-medium text-muted uppercase tracking-widest">
+          {icon&&<span className="mr-1">{icon}</span>}{label}
+        </span>
+        <Sparkline data={trend} color={accentColor}/>
+      </div>
+      <div className="font-mono text-2xl font-semibold text-primary tracking-tight">{value}</div>
+      <div className={`font-mono text-xs font-medium ${pos?'text-positive':'text-negative'}`}>
+        {pos?'▲':'▼'} {fmtDelta(Math.abs(d))} vs prior period
+      </div>
+    </div>
+  );
+}
+
+// ─── THEME TOGGLE ─────────────────────────────────────────────────────────────
+function SunIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  );
+}
+function MoonIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  );
+}
+
+function ThemeToggle() {
+  const {isDark, toggle} = useTheme();
+  return (
+    <button onClick={toggle}
+      className="w-8 h-8 flex items-center justify-center rounded-md border border-border text-muted hover:text-primary transition-all hover:border-primary"
+      title={isDark?'Switch to light mode':'Switch to dark mode'}
+      style={{flexShrink:0}}>
+      {isDark ? <SunIcon/> : <MoonIcon/>}
+    </button>
+  );
+}
+
+// ─── DATE RANGE PICKER ────────────────────────────────────────────────────────
+function DateRangePicker({value,onChange,accent='#f5a623'}) {
+  return (
+    <div className="flex items-center gap-0.5 rounded-md border border-border bg-surface p-0.5">
+      {[['7D','7d'],['30D','30d'],['90D','90d']].map(([lbl,val])=>(
+        <button key={val} onClick={()=>onChange(val)}
+          className="px-3 py-1 rounded font-mono text-xs font-medium transition-all duration-150"
+          style={value===val?{background:accent,color:'#0f0f11'}:{color:'var(--text-muted)'}}>
+          {lbl}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── CHART TOOLTIP ────────────────────────────────────────────────────────────
+function CT({active,payload,label,fmt}) {
+  if (!active||!payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg font-mono" style={{fontSize:'11px'}}>
+      <div className="text-muted mb-1">{label&&fmtDate(label)}</div>
+      {payload.map((item,i)=>(
+        <div key={i} className="flex items-center gap-2 py-0.5">
+          <span className="inline-block w-2 h-2 rounded-full" style={{background:item.color}}/>
+          <span className="text-muted">{item.name}:</span>
+          <span className="text-primary font-semibold">{fmt?fmt(item.value):item.value?.toLocaleString()}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Chart style helpers — use CSS variables so grids switch with theme
+const chartGrid  = () => ({style:{stroke:'var(--chart-grid)'},strokeDasharray:'3 3',vertical:false});
+const chartCursor = {fill:'rgba(100,100,120,0.07)'};   // subtle on both modes
+const lineCursor  = {stroke:'var(--chart-grid)'};
+
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+function Sidebar({page,setPage,activeChannels,activeStores,togCh,togSt,allCh,allSt}) {
+  const [collapsed,setCollapsed]=useState(false);
+  const nav=[
+    {id:'combined',label:'Combined',icon:'◈',accent:'#a78bfa'},
+    {id:'youtube', label:'YouTube', icon:'▷',accent:'#f5a623'},
+    {id:'store',   label:'Store',   icon:'◻',accent:'#22d3c5'},
+  ];
+  return (
+    <aside className={`flex flex-col h-screen border-r border-border bg-surface shrink-0 transition-all duration-200 ${collapsed?'w-14':'w-56'}`}>
+      {/* Brand */}
+      <div className={`flex items-center gap-2.5 px-4 py-4 border-b border-border ${collapsed?'justify-center px-0':''}`}>
+        <div className="w-7 h-7 rounded flex items-center justify-center shrink-0" style={{background:'#f5a623'}}>
+          <span className="font-mono text-xs font-bold" style={{color:'#0f0f11'}}>AD</span>
+        </div>
+        {!collapsed&&<span className="font-mono text-xs font-semibold text-primary tracking-wider uppercase">Analytics</span>}
+      </div>
+
+      {/* Nav */}
+      <nav className="flex flex-col gap-0.5 p-2 border-b border-border">
+        {nav.map(({id,label,icon,accent})=>(
+          <button key={id} onClick={()=>setPage(id)}
+            className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-sans font-medium transition-all w-full text-left ${collapsed?'justify-center':''}`}
+            style={page===id
+              ? {background:'var(--bg-card)',color:'var(--text-primary)',border:'1px solid var(--border-c)',boxShadow:`inset 0 0 0 1px ${accent}28`}
+              : {color:'var(--text-muted)',border:'1px solid transparent'}
+            }>
+            <span className="font-mono text-sm shrink-0" style={page===id?{color:accent}:{}}>{icon}</span>
+            {!collapsed&&label}
+          </button>
+        ))}
+      </nav>
+
+      {!collapsed&&(
+        <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-4">
+          {/* Channels */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-mono text-muted uppercase tracking-widest" style={{fontSize:'10px'}}>Channels</span>
+              <button onClick={allCh} className="font-mono text-muted hover:text-accent-yt transition-colors" style={{fontSize:'10px'}}>
+                {activeChannels.length===CHANNELS.length?'None':'All'}
+              </button>
+            </div>
+            {CHANNELS.map(ch=>(
+              <label key={ch.id} className="flex items-center gap-2 py-1.5 cursor-pointer group">
+                <span onClick={()=>togCh(ch.id)}
+                  className="flex items-center justify-center shrink-0 rounded-sm cursor-pointer transition-all"
+                  style={{width:'14px',height:'14px',
+                    background:activeChannels.includes(ch.id)?ch.color:'transparent',
+                    border:`1px solid ${activeChannels.includes(ch.id)?ch.color:'var(--border-c)'}`}}>
+                  {activeChannels.includes(ch.id)&&<svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="#0f0f11" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>}
+                </span>
+                <span className="font-sans text-xs text-muted group-hover:text-primary transition-colors truncate">{ch.avatar} {ch.name}</span>
+              </label>
+            ))}
+          </div>
+
+          {/* Stores */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-mono text-muted uppercase tracking-widest" style={{fontSize:'10px'}}>Stores</span>
+              <button onClick={allSt} className="font-mono text-muted hover:text-accent-store transition-colors" style={{fontSize:'10px'}}>
+                {activeStores.length===STORES.length?'None':'All'}
+              </button>
+            </div>
+            {STORES.map(st=>(
+              <label key={st.id} className="flex items-center gap-2 py-1.5 cursor-pointer group">
+                <span onClick={()=>togSt(st.id)}
+                  className="flex items-center justify-center shrink-0 rounded-sm cursor-pointer transition-all"
+                  style={{width:'14px',height:'14px',
+                    background:activeStores.includes(st.id)?st.color:'transparent',
+                    border:`1px solid ${activeStores.includes(st.id)?st.color:'var(--border-c)'}`}}>
+                  {activeStores.includes(st.id)&&<svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 4l2 2 4-4" stroke="#0f0f11" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>}
+                </span>
+                <span className="font-sans text-xs text-muted group-hover:text-primary transition-colors truncate">{st.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <button onClick={()=>setCollapsed(c=>!c)}
+        className="flex items-center justify-center gap-1.5 p-3 border-t border-border text-muted hover:text-primary transition-colors font-sans text-xs">
+        {collapsed?'→':<><span>←</span><span>Collapse</span></>}
+      </button>
+    </aside>
+  );
+}
+
+// ─── HEADER ──────────────────────────────────────────────────────────────────
+function Header({title,subtitle,dateRange,onDateRange,accent}) {
+  return (
+    <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 z-10"
+      style={{background:'var(--header-bg)',backdropFilter:'blur(8px)'}}>
+      <div>
+        <h1 className="font-mono text-base font-semibold text-primary tracking-tight">{title}</h1>
+        {subtitle&&<p className="font-sans text-xs text-muted mt-0.5">{subtitle}</p>}
+      </div>
+      <div className="flex items-center gap-2">
+        <ThemeToggle/>
+        <DateRangePicker value={dateRange} onChange={onDateRange} accent={accent}/>
+      </div>
+    </div>
+  );
+}
+
+// ─── CHART CARD ──────────────────────────────────────────────────────────────
+function ChartCard({title,legend,children}) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="flex items-center justify-between mb-4">
+        <span className="font-mono text-muted uppercase tracking-widest" style={{fontSize:'11px',fontWeight:600}}>{title}</span>
+        {legend&&<div className="flex gap-3">{legend}</div>}
+      </div>
+      {children}
+    </div>
+  );
+}
+function LegendDot({color,label}) {
+  return (
+    <span className="flex items-center gap-1.5 font-mono text-muted" style={{fontSize:'10px'}}>
+      <span className="inline-block w-2 h-2 rounded-full" style={{background:color}}/>
+      {label}
+    </span>
+  );
+}
+
+const XT = {fill:'#6b7280',fontSize:10,fontFamily:'IBM Plex Mono'};
+
+// ─── SORTABLE TABLE ───────────────────────────────────────────────────────────
+function Table({cols,rows,rowKey}) {
+  const [sk,setSk]=useState(cols[1]?.key||'');
+  const [sd,setSd]=useState(-1);
+  const data=[...rows].sort((a,b)=>{
+    const av=a[sk],bv=b[sk];
+    if (typeof av==='number'&&typeof bv==='number') return (av-bv)*sd;
+    return String(av).localeCompare(String(bv))*sd;
+  });
+  const thSort=k=>{ if(sk===k) setSd(d=>-d); else{setSk(k);setSd(-1);} };
+  return (
+    <div className="rounded-lg border border-border bg-card overflow-hidden">
+      <table className="w-full" style={{fontSize:'12px'}}>
+        <thead>
+          <tr className="border-b border-border">
+            {cols.map(c=>(
+              <th key={c.key} onClick={()=>thSort(c.key)}
+                className={`px-4 py-3 font-mono text-muted uppercase tracking-widest cursor-pointer hover:text-primary transition-colors ${c.right?'text-right':'text-left'}`}
+                style={{fontSize:'10px',fontWeight:600}}>
+                {c.label} {sk===c.key?(sd<0?'↓':'↑'):''}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row,i)=>(
+            <tr key={row[rowKey]} className={`border-b hover:bg-surface transition-colors ${i===data.length-1?'border-b-0':'border-border/50'}`}>
+              {cols.map(c=>(
+                <td key={c.key} className={`px-4 py-3 font-mono text-primary ${c.right?'text-right':''}`}>
+                  {c.render?c.render(row[c.key],row):String(row[c.key]??'—')}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+function DeltaCell({v}) {
+  return <span className={`font-mono ${v>=0?'text-positive':'text-negative'}`} style={{fontSize:'11px'}}>{v>=0?'▲':'▼'} {fmtDelta(Math.abs(v))}</span>;
+}
+
+// ─── YOUTUBE PAGE ─────────────────────────────────────────────────────────────
+function YouTubePage({dateRange,setDateRange,activeChannels}) {
+  const m=useYTMetrics(dateRange,activeChannels);
+  const chs=CHANNELS.filter(c=>activeChannels.includes(c.id));
+  const tableRows=m.channelBreakdown.map(b=>({
+    cid:b.cid, name:CHANNELS.find(c=>c.id===b.cid)?.name||b.cid,
+    views:b.views, revenue:b.revenue, dv:b.dv, dr:b.dr,
+  }));
+  const ytCols=[
+    {key:'name',label:'Channel',render:(v,r)=>{const ch=CHANNELS.find(c=>c.id===r.cid);return<span className="flex items-center gap-2"><span className="inline-block w-2 h-2 rounded-full" style={{background:ch?.color}}/>{v}</span>;}},
+    {key:'views',  label:'Views',   right:true,render:v=>fmtNum(v)},
+    {key:'revenue',label:'Revenue', right:true,render:v=>fmtUSD(v)},
+    {key:'dv',     label:'Δ Views', right:true,render:v=><DeltaCell v={v}/>},
+    {key:'dr',     label:'Δ Rev',   right:true,render:v=><DeltaCell v={v}/>},
+  ];
+  return (
+    <div className="flex flex-col fade-in">
+      <Header title="YouTube Analytics" subtitle="Views and revenue across all channels" dateRange={dateRange} onDateRange={setDateRange} accent="#f5a623"/>
+      <div className="p-6 flex flex-col gap-5">
+        <div className="grid grid-cols-3 gap-4">
+          <StatCard label="Total Views"   value={fmtNum(m.tv)}  delta={m.dv}   trend={m.l7v} accentColor="#f5a623" icon="👁"/>
+          <StatCard label="Total Revenue" value={fmtUSD(m.tr)}  delta={m.dr}   trend={m.l7r} accentColor="#f5a623" icon="💰"/>
+          <StatCard label="RPM"           value={'$'+m.rpm.toFixed(2)} delta={m.drpm}
+            trend={m.l7r.map((r,i)=>m.l7v[i]>0?(r/m.l7v[i])*1000:0)} accentColor="#f5a623" icon="📈"/>
+        </div>
+
+        <ChartCard title="Views Over Time" legend={chs.map(c=><LegendDot key={c.id} color={c.color} label={c.name}/>)}>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={m.chartData} margin={{top:4,right:4,bottom:0,left:0}}>
+              <defs>{chs.map(c=><linearGradient key={c.id} id={'gv'+c.id} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={c.color} stopOpacity={0.2}/>
+                <stop offset="95%" stopColor={c.color} stopOpacity={0}/>
+              </linearGradient>)}</defs>
+              <CartesianGrid {...chartGrid()}/>
+              <XAxis dataKey="date" tickFormatter={fmtDate} tick={XT} axisLine={false} tickLine={false} interval="preserveStartEnd"/>
+              <YAxis tickFormatter={fmtNum} tick={XT} axisLine={false} tickLine={false} width={44}/>
+              <Tooltip content={p=><CT {...p} fmt={fmtNum}/>} cursor={lineCursor}/>
+              {chs.map(c=><Area key={c.id} type="monotone" dataKey={'v_'+c.id} name={c.name} stroke={c.color} fill={'url(#gv'+c.id+')'} strokeWidth={1.5} dot={false} activeDot={{r:3,strokeWidth:0}}/>)}
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Revenue Over Time">
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={m.chartData} margin={{top:4,right:4,bottom:0,left:0}}>
+              <CartesianGrid {...chartGrid()}/>
+              <XAxis dataKey="date" tickFormatter={fmtDate} tick={XT} axisLine={false} tickLine={false} interval="preserveStartEnd"/>
+              <YAxis tickFormatter={fmtUSD} tick={XT} axisLine={false} tickLine={false} width={56}/>
+              <Tooltip content={p=><CT {...p} fmt={fmtUSD}/>} cursor={lineCursor}/>
+              {chs.map(c=><Line key={c.id} type="monotone" dataKey={'r_'+c.id} name={c.name} stroke={c.color} strokeWidth={1.5} dot={false} activeDot={{r:3,strokeWidth:0}}/>)}
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <div>
+          <div className="font-mono text-muted uppercase tracking-widest mb-3" style={{fontSize:'11px',fontWeight:600}}>Channel Breakdown</div>
+          <Table cols={ytCols} rows={tableRows} rowKey="cid"/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── STORE PAGE ───────────────────────────────────────────────────────────────
+function StorePage({dateRange,setDateRange,activeStores}) {
+  const m=useStoreMetrics(dateRange,activeStores);
+  const sts=STORES.filter(s=>activeStores.includes(s.id));
+  const tableRows=m.storeBreakdown.map(b=>({
+    sid:b.sid, name:STORES.find(s=>s.id===b.sid)?.name||b.sid,
+    units:b.units, revenue:b.revenue, convRate:b.convRate, du:b.du, dr:b.dr,
+  }));
+  const stCols=[
+    {key:'name',    label:'Store',   render:(v,r)=>{const st=STORES.find(s=>s.id===r.sid);return<span className="flex items-center gap-2"><span className="inline-block w-2 h-2 rounded-full" style={{background:st?.color}}/>{v}</span>;}},
+    {key:'units',   label:'Units',   right:true,render:v=>fmtNum(v)},
+    {key:'revenue', label:'Revenue', right:true,render:v=>fmtUSD(v)},
+    {key:'convRate',label:'Conv %',  right:true,render:v=>fmtPct(v)},
+    {key:'du',      label:'Δ Units', right:true,render:v=><DeltaCell v={v}/>},
+    {key:'dr',      label:'Δ Rev',   right:true,render:v=><DeltaCell v={v}/>},
+  ];
+  return (
+    <div className="flex flex-col fade-in">
+      <Header title="Store Analytics" subtitle="Units sold, revenue and conversion across stores" dateRange={dateRange} onDateRange={setDateRange} accent="#22d3c5"/>
+      <div className="p-6 flex flex-col gap-5">
+        <div className="grid grid-cols-4 gap-4">
+          <StatCard label="Units Sold"    value={fmtNum(m.tu)}  delta={m.du}   trend={m.l7u} accentColor="#22d3c5" icon="📦"/>
+          <StatCard label="Revenue"       value={fmtUSD(m.tr)}  delta={m.dr}   trend={m.l7u} accentColor="#22d3c5" icon="💳"/>
+          <StatCard label="Avg Conv Rate" value={fmtPct(m.ac)}  delta={m.dc}   trend={m.l7c} accentColor="#22d3c5" icon="🎯"/>
+          <StatCard label="Avg Order Val" value={fmtUSD(m.aov)} delta={m.daov} trend={m.l7u} accentColor="#22d3c5" icon="🛒"/>
+        </div>
+
+        <ChartCard title="Units Sold" legend={sts.map(s=><LegendDot key={s.id} color={s.color} label={s.name}/>)}>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={m.chartData} margin={{top:4,right:4,bottom:0,left:0}} barGap={2}>
+              <CartesianGrid {...chartGrid()}/>
+              <XAxis dataKey="date" tickFormatter={fmtDate} tick={XT} axisLine={false} tickLine={false} interval="preserveStartEnd"/>
+              <YAxis tickFormatter={fmtNum} tick={XT} axisLine={false} tickLine={false} width={36}/>
+              <Tooltip content={p=><CT {...p} fmt={fmtNum}/>} cursor={chartCursor}/>
+              {sts.map(s=><Bar key={s.id} dataKey={'u_'+s.id} name={s.name} fill={s.color} radius={[2,2,0,0]} opacity={0.85}/>)}
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Conversion Rate %" legend={sts.map(s=><LegendDot key={s.id} color={s.color} label={s.name}/>)}>
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={m.chartData} margin={{top:4,right:4,bottom:0,left:0}}>
+              <CartesianGrid {...chartGrid()}/>
+              <XAxis dataKey="date" tickFormatter={fmtDate} tick={XT} axisLine={false} tickLine={false} interval="preserveStartEnd"/>
+              <YAxis tickFormatter={fmtPct} tick={XT} axisLine={false} tickLine={false} width={44}/>
+              <Tooltip content={p=><CT {...p} fmt={fmtPct}/>} cursor={lineCursor}/>
+              {sts.map(s=><Line key={s.id} type="monotone" dataKey={'c_'+s.id} name={s.name} stroke={s.color} strokeWidth={1.5} dot={false} activeDot={{r:3,strokeWidth:0}}/>)}
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <div>
+          <div className="font-mono text-muted uppercase tracking-widest mb-3" style={{fontSize:'11px',fontWeight:600}}>Store Breakdown</div>
+          <Table cols={stCols} rows={tableRows} rowKey="sid"/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── COMBINED PAGE ────────────────────────────────────────────────────────────
+function CombinedPage({dateRange,setDateRange,activeChannels,activeStores}) {
+  const yt=useYTMetrics(dateRange,activeChannels);
+  const st=useStoreMetrics(dateRange,activeStores);
+
+  const stackedData=useMemo(()=>{
+    const cut=cutISO(dateRange);
+    const ym={},sm={};
+    for (const d of YT_DATA) if (activeChannels.includes(d.channelId)&&d.date>cut) ym[d.date]=(ym[d.date]||0)+d.revenue;
+    for (const d of STORE_DATA) if (activeStores.includes(d.storeId)&&d.date>cut) sm[d.date]=(sm[d.date]||0)+d.revenue;
+    const dates=[...new Set([...Object.keys(ym),...Object.keys(sm)])].sort();
+    return dates.map(date=>({date,ytRevenue:ym[date]||0,storeRevenue:sm[date]||0}));
+  },[dateRange,activeChannels.join(','),activeStores.join(',')]);
+
+  const dualData=useMemo(()=>{
+    const dm={};
+    for (const d of yt.chartData) dm[d.date]={views:d.views,cs:0,cn:0};
+    for (const d of st.chartData) if (dm[d.date]) {dm[d.date].cs+=d.convRate;dm[d.date].cn+=1;}
+    return Object.entries(dm).sort(([a],[b])=>a.localeCompare(b)).map(([date,v])=>({date,views:v.views,convRate:v.cn?v.cs/v.cn:0}));
+  },[yt.chartData,st.chartData]);
+
+  const ytDonut=CHANNELS.filter(c=>activeChannels.includes(c.id)).map(c=>{
+    const b=yt.channelBreakdown.find(x=>x.cid===c.id);
+    return {name:c.name,value:b?.revenue||0,color:c.color};
+  });
+  const stDonut=STORES.filter(s=>activeStores.includes(s.id)).map(s=>{
+    const b=st.storeBreakdown.find(x=>x.sid===s.id);
+    return {name:s.name,value:b?.revenue||0,color:s.color};
+  });
+  const totalRev=yt.tr+st.tr;
+  const combTrend=stackedData.slice(-7).map(d=>d.ytRevenue+d.storeRevenue);
+
+  return (
+    <div className="flex flex-col fade-in">
+      <Header title="Combined Overview" subtitle="YouTube + Web Store — unified metrics" dateRange={dateRange} onDateRange={setDateRange} accent="#a78bfa"/>
+      <div className="p-6 flex flex-col gap-5">
+        <div className="grid grid-cols-4 gap-4">
+          <StatCard label="YT Views"     value={fmtNum(yt.tv)}   delta={yt.dv}            trend={yt.l7v}   accentColor="#f5a623"  icon="👁"/>
+          <StatCard label="YT Revenue"   value={fmtUSD(yt.tr)}   delta={yt.dr}            trend={yt.l7r}   accentColor="#f5a623"  icon="📺"/>
+          <StatCard label="Store Units"  value={fmtNum(st.tu)}   delta={st.du}            trend={st.l7u}   accentColor="#22d3c5"  icon="📦"/>
+          <StatCard label="Total Revenue"value={fmtUSD(totalRev)} delta={(yt.dr+st.dr)/2} trend={combTrend} accentColor="#a78bfa" icon="💎"/>
+        </div>
+
+        <ChartCard title="Combined Revenue — YouTube vs Store"
+          legend={[<LegendDot key="yt" color="#f5a623" label="YouTube"/>,<LegendDot key="st" color="#22d3c5" label="Store"/>]}>
+          <ResponsiveContainer width="100%" height={230}>
+            <BarChart data={stackedData} margin={{top:4,right:4,bottom:0,left:0}}>
+              <CartesianGrid {...chartGrid()}/>
+              <XAxis dataKey="date" tickFormatter={fmtDate} tick={XT} axisLine={false} tickLine={false} interval="preserveStartEnd"/>
+              <YAxis tickFormatter={fmtUSD} tick={XT} axisLine={false} tickLine={false} width={56}/>
+              <Tooltip content={p=><CT {...p} fmt={fmtUSD}/>} cursor={chartCursor}/>
+              <Bar dataKey="ytRevenue"    name="YouTube" fill="#f5a623" stackId="r" opacity={0.9}/>
+              <Bar dataKey="storeRevenue" name="Store"   fill="#22d3c5" stackId="r" radius={[2,2,0,0]} opacity={0.9}/>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <div className="grid grid-cols-2 gap-4">
+          {[[ytDonut,'YT Revenue by Channel'],[stDonut,'Store Revenue by Store']].map(([data,title])=>{
+            const total=data.reduce((s,d)=>s+d.value,0);
+            return (
+              <ChartCard key={title} title={title}>
+                <div className="flex items-center gap-4">
+                  <div style={{width:120,height:120,flexShrink:0}}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={data} cx="50%" cy="50%" innerRadius={32} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                          {data.map((e,i)=><Cell key={i} fill={e.color}/>)}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex flex-col gap-2 flex-1 min-w-0">
+                    {data.map(d=>(
+                      <div key={d.name} className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{background:d.color}}/>
+                          <span className="font-sans text-xs text-muted truncate">{d.name}</span>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="font-mono text-xs text-primary">{fmtUSD(d.value)}</span>
+                          <span className="font-mono text-muted ml-1" style={{fontSize:'10px'}}>{total>0?fmtPct((d.value/total)*100):'0%'}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </ChartCard>
+            );
+          })}
+        </div>
+
+        <ChartCard title="YT Views vs Store Conversion %"
+          legend={[<LegendDot key="v" color="#f5a623" label="YT Views"/>,<LegendDot key="c" color="#22d3c5" label="Conv %"/>]}>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={dualData} margin={{top:4,right:48,bottom:0,left:0}}>
+              <CartesianGrid {...chartGrid()}/>
+              <XAxis dataKey="date" tickFormatter={fmtDate} tick={XT} axisLine={false} tickLine={false} interval="preserveStartEnd"/>
+              <YAxis yAxisId="l" tickFormatter={fmtNum} tick={XT} axisLine={false} tickLine={false} width={48}/>
+              <YAxis yAxisId="r" orientation="right" tickFormatter={fmtPct} tick={XT} axisLine={false} tickLine={false} width={44}/>
+              <Tooltip content={p=><CT {...p}/>} cursor={lineCursor}/>
+              <Line yAxisId="l" type="monotone" dataKey="views"    name="Views"  stroke="#f5a623" strokeWidth={1.5} dot={false} activeDot={{r:3,strokeWidth:0}}/>
+              <Line yAxisId="r" type="monotone" dataKey="convRate" name="Conv %" stroke="#22d3c5" strokeWidth={1.5} dot={false} activeDot={{r:3,strokeWidth:0}}/>
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+    </div>
+  );
+}
+
+// ─── APP ─────────────────────────────────────────────────────────────────────
+function App() {
+  const [page,setPage]=useState('combined');
+  const [dateRange,setDateRange]=useState('30d');
+  const [activeChannels,setActiveCh]=useState(CHANNELS.map(c=>c.id));
+  const [activeStores,setActiveSt]=useState(STORES.map(s=>s.id));
+  const togCh=useCallback(id=>setActiveCh(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]),[]);
+  const togSt=useCallback(id=>setActiveSt(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]),[]);
+  const allCh=useCallback(()=>setActiveCh(p=>p.length===CHANNELS.length?[]:CHANNELS.map(c=>c.id)),[]);
+  const allSt=useCallback(()=>setActiveSt(p=>p.length===STORES.length?[]:STORES.map(s=>s.id)),[]);
+  const pageProps={dateRange,setDateRange,activeChannels,activeStores};
+
+  return (
+    <ThemeProvider>
+      <div className="flex h-screen w-screen bg-base text-primary overflow-hidden">
+        <Sidebar page={page} setPage={setPage} activeChannels={activeChannels} activeStores={activeStores} togCh={togCh} togSt={togSt} allCh={allCh} allSt={allSt}/>
+        <main className="flex-1 overflow-y-auto">
+          {page==='combined'&&<CombinedPage {...pageProps}/>}
+          {page==='youtube'&&<YouTubePage  {...pageProps}/>}
+          {page==='store'&&<StorePage     {...pageProps}/>}
+        </main>
+      </div>
+    </ThemeProvider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
