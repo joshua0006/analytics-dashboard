@@ -258,33 +258,91 @@ function useStoreMetrics(range, activeStores) {
 }
 
 // ─── SPARKLINE ────────────────────────────────────────────────────────────────
-function Sparkline({data,color,w=80,h=28}) {
-  if (!data||!data.length) return null;
-  const mn=Math.min(...data), mx=Math.max(...data), rng=mx-mn||1;
-  const pts=data.map((v,i)=>`${(i/(data.length-1))*w},${h-((v-mn)/rng)*(h-4)-2}`).join(' ');
+function colorHash(color) {
+  let h = 5381;
+  for (let i = 0; i < color.length; i++) h = ((h << 5) + h) ^ color.charCodeAt(i);
+  return (h >>> 0).toString(36);
+}
+function buildLinePath(pts, tension=0.4) {
+  if (pts.length < 2) return `M ${pts[0][0]} ${pts[0][1]}`;
+  let d = `M ${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0=pts[Math.max(i-1,0)], p1=pts[i], p2=pts[i+1], p3=pts[Math.min(i+2,pts.length-1)];
+    const cp1x=p1[0]+(p2[0]-p0[0])*tension, cp1y=p1[1]+(p2[1]-p0[1])*tension;
+    const cp2x=p2[0]-(p3[0]-p1[0])*tension, cp2y=p2[1]-(p3[1]-p1[1])*tension;
+    d += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`;
+  }
+  return d;
+}
+function Sparkline({data,color,w=96,h=40}) {
+  if (!data||data.length<2) return null;
+  const mn=Math.min(...data), mx=Math.max(...data), rng=mx-mn||1, PAD=5;
+  const pts=data.map((v,i)=>[(i/(data.length-1))*w, h-((v-mn)/rng)*(h-PAD*2)-PAD]);
+  const linePath=buildLinePath(pts);
+  const [lx,ly]=pts[pts.length-1];
+  const areaPath=`${linePath} L ${lx.toFixed(2)} ${h} L 0 ${h} Z`;
+  const gradId=`sg-${colorHash(color)}`;
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} overflow="visible" aria-hidden="true">
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.35"/>
+          <stop offset="70%" stopColor={color} stopOpacity="0.06"/>
+          <stop offset="100%" stopColor={color} stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill={`url(#${gradId})`}/>
+      <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"/>
+      <circle cx={lx} cy={ly} r="5" fill={color} opacity="0.18"/>
+      <circle cx={lx} cy={ly} r="2.5" fill={color}/>
     </svg>
   );
 }
 
 // ─── STAT CARD ────────────────────────────────────────────────────────────────
+function ArrowUp() {
+  return <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true"><path d="M4 7V1M4 1L1 4M4 1L7 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+}
+function ArrowDown() {
+  return <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true"><path d="M4 1V7M4 7L1 4M4 7L7 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+}
 function StatCard({label,value,delta:d,trend,accentColor,icon}) {
   const pos=d>=0;
+  const badgeBg=pos?'rgba(74,222,128,0.14)':'rgba(248,113,113,0.14)';
   return (
-    <div className="relative overflow-hidden rounded-lg p-4 flex flex-col gap-3 border border-border bg-card"
-      style={{boxShadow:`0 0 0 1px ${accentColor}22`}}>
-      <div className="absolute top-0 left-0 right-0" style={{height:'2px',background:accentColor}}/>
-      <div className="flex items-center justify-between">
-        <span className="font-sans text-xs font-medium text-muted uppercase tracking-widest">
-          {icon&&<span className="mr-1">{icon}</span>}{label}
-        </span>
-        <Sparkline data={trend} color={accentColor}/>
+    <div className="relative overflow-hidden rounded-xl p-4 flex flex-col gap-3 border border-border"
+      style={{
+        background:`radial-gradient(ellipse 140% 100% at 0% 0%, ${accentColor}10 0%, transparent 55%), var(--bg-card)`,
+        boxShadow:`0 0 0 1px ${accentColor}1f, 0 1px 3px rgba(0,0,0,0.07), 0 6px 20px ${accentColor}0d`,
+      }}>
+      <div className="absolute top-0 left-0 right-0 h-[2px]" style={{background:accentColor}}/>
+      <div className="absolute top-0 left-0 right-0 h-10 pointer-events-none"
+        style={{background:`linear-gradient(to bottom, ${accentColor}1a, transparent)`}}/>
+      <div className="flex items-start justify-between gap-2 pt-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {icon&&<span style={{fontSize:'13px',lineHeight:1,flexShrink:0,userSelect:'none'}}>{icon}</span>}
+          <span className="font-sans font-semibold uppercase truncate"
+            style={{fontSize:'10px',letterSpacing:'0.11em',color:'var(--text-muted)'}}>
+            {label}
+          </span>
+        </div>
+        <div style={{flexShrink:0}}><Sparkline data={trend} color={accentColor}/></div>
       </div>
-      <div className="font-mono text-2xl font-semibold text-primary tracking-tight">{value}</div>
-      <div className={`font-mono text-xs font-medium ${pos?'text-positive':'text-negative'}`}>
-        {pos?'▲':'▼'} {fmtDelta(Math.abs(d))} vs prior period
+      <div className="font-mono font-semibold tracking-tight leading-none"
+        style={{fontSize:'clamp(1.4rem, 3vw, 1.875rem)',color:'var(--text-primary)'}}>
+        {value}
+      </div>
+      <div className="h-px w-full"
+        style={{background:`linear-gradient(to right, ${accentColor}2e, var(--border-c) 45%, transparent 80%)`}}/>
+      <div className="flex items-center gap-2">
+        <span className="inline-flex items-center font-mono font-semibold leading-none rounded"
+          style={{gap:'3px',padding:'3px 6px',fontSize:'10px',background:badgeBg,color:pos?'var(--positive)':'var(--negative)'}}>
+          {pos?<ArrowUp/>:<ArrowDown/>}
+          {fmtDelta(Math.abs(d))}
+        </span>
+        <span className="font-sans" style={{fontSize:'10px',color:'var(--text-muted)',lineHeight:1}}>
+          vs prior period
+        </span>
       </div>
     </div>
   );
