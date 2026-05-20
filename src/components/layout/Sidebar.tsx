@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Youtube, ShoppingBag,
   ChevronLeft, ChevronRight,
@@ -40,6 +40,9 @@ const STORE_ICONS: Record<string, AnyIcon> = {
 
 export function Sidebar({ activeChannels, activeStores, onToggleChannel, onToggleStore, onToggleAllChannels, onToggleAllStores }: Props) {
   const [collapsed, setCollapsed] = useState(false);
+  const { pathname } = useLocation();
+  const showChannels = pathname === '/youtube' || pathname === '/combined';
+  const showStores = pathname === '/store' || pathname === '/combined';
 
   return (
     <aside
@@ -89,7 +92,7 @@ export function Sidebar({ activeChannels, activeStores, onToggleChannel, onToggl
         <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-5">
 
           {/* Channels */}
-          <div>
+          {showChannels && <div>
             <div className="flex items-center justify-between mb-2">
               <span className="font-mono text-[10px] text-muted uppercase tracking-widest">Channels</span>
               <button
@@ -123,10 +126,10 @@ export function Sidebar({ activeChannels, activeStores, onToggleChannel, onToggl
                 );
               })}
             </div>
-          </div>
+          </div>}
 
           {/* Stores */}
-          <div>
+          {showStores && <div>
             <div className="flex items-center justify-between mb-2">
               <span className="font-mono text-[10px] text-muted uppercase tracking-widest">Stores</span>
               <button
@@ -160,7 +163,7 @@ export function Sidebar({ activeChannels, activeStores, onToggleChannel, onToggl
                 );
               })}
             </div>
-          </div>
+          </div>}
 
         </div>
       )}
