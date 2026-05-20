@@ -57,7 +57,7 @@ export function StatCard({ label, value, delta, trend, accentColor, icon }: Prop
 
       {/* Zone 2: Value */}
       <div
-        className="font-mono font-semibold tracking-tight leading-none"
+        className="font-mono font-semibold tracking-tight leading-none overflow-hidden"
         style={{ fontSize: 'clamp(1.4rem, 3vw, 1.875rem)', color: 'var(--text-primary)' }}
       >
         {value}

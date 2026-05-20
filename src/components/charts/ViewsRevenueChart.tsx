@@ -22,7 +22,7 @@ export function ViewsChart({ data, activeChannels }: Props) {
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-y-1.5 mb-4">
         <h3 className="font-mono text-xs font-semibold text-muted uppercase tracking-widest">Views Over Time</h3>
         <div className="flex gap-3">
           {channels.map(c => (

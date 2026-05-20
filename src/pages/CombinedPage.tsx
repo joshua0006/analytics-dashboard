@@ -103,7 +103,7 @@ export function CombinedPage() {
 
       <div className="p-3 md:p-4 lg:p-6 flex flex-col gap-4 md:gap-6">
         {/* KPI row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="YT Views"
             value={formatNumber(ytMetrics.totalViews)}
