@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Youtube, ShoppingBag,
   ChevronLeft, ChevronRight,
-  Sprout, Zap, Truck, Leaf,
+  Sprout, Zap, Truck, Leaf, ChartBar,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { CHANNELS } from '../../data/mockYouTube';
@@ -54,7 +54,7 @@ export function Sidebar({ activeChannels, activeStores, onToggleChannel, onToggl
       {/* Brand */}
       <div className={clsx('flex items-center gap-2.5 px-4 py-4 border-b border-border', collapsed && 'justify-center px-0')}>
         <div className="w-7 h-7 rounded bg-accent-yt flex items-center justify-center shrink-0">
-          <span className="font-mono text-xs font-bold text-base">AD</span>
+          <ChartBar size={15} strokeWidth={2} className="text-base" />
         </div>
         {!collapsed && (
           <span className="font-mono text-xs font-semibold text-primary tracking-wider uppercase">Analytics</span>
