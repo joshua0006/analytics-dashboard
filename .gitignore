@@ -4,3 +4,16 @@ dist/
 .env.local
 *.log
 .DS_Store
+
+# TypeScript build cache
+tsconfig.app.tsbuildinfo
+tsconfig.node.tsbuildinfo
+
+# Lock files (generated)
+package-lock.json
+
+# Tooling / local config
+.agents/
+.claude/
+.impeccable/
+skills-lock.json

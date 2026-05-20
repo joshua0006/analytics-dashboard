@@ -19,18 +19,21 @@ interface Props {
 }
 
 const navItems = [
-  { to: '/combined', label: 'Combined',  Icon: LayoutDashboard },
-  { to: '/youtube',  label: 'YouTube',   Icon: Youtube         },
-  { to: '/store',    label: 'Web Store', Icon: ShoppingBag     },
+  { to: '/combined', label: 'Combined',  Icon: LayoutDashboard, accent: '#a78bfa' },
+  { to: '/youtube',  label: 'YouTube',   Icon: Youtube,         accent: '#f5a623' },
+  { to: '/store',    label: 'Web Store', Icon: ShoppingBag,     accent: '#22d3c5' },
 ];
 
-const CHANNEL_ICONS: Record<string, React.ComponentType<{ size?: number; strokeWidth?: number }>> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyIcon = React.ComponentType<any>;
+
+const CHANNEL_ICONS: Record<string, AnyIcon> = {
   'yt-001': Sprout,
   'yt-002': Zap,
   'yt-003': Truck,
 };
 
-const STORE_ICONS: Record<string, React.ComponentType<{ size?: number; strokeWidth?: number }>> = {
+const STORE_ICONS: Record<string, AnyIcon> = {
   'st-001': Leaf,
   'st-002': ShoppingBag,
 };
@@ -57,20 +60,27 @@ export function Sidebar({ activeChannels, activeStores, onToggleChannel, onToggl
 
       {/* Nav */}
       <nav className="flex flex-col gap-0.5 p-2 border-b border-border">
-        {navItems.map(({ to, label, Icon }) => (
+        {navItems.map(({ to, label, Icon, accent }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) => clsx(
-              'flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-sans font-medium transition-all',
+              'flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-sans font-medium transition-all duration-150',
               collapsed && 'justify-center px-0',
-              isActive
-                ? 'bg-card text-primary border border-border'
-                : 'text-muted hover:text-primary hover:bg-card/50'
+              isActive ? 'text-primary' : 'text-muted hover:text-primary hover:bg-card/50',
             )}
+            style={({ isActive }) => isActive ? {
+              background: `${accent}14`,
+              border: `1px solid ${accent}42`,
+              color: 'var(--text-primary)',
+            } : { border: '1px solid transparent' }}
           >
-            <Icon size={15} className="shrink-0" />
-            {!collapsed && label}
+            {({ isActive }) => (
+              <>
+                <Icon size={15} className="shrink-0" style={isActive ? { color: accent } : undefined} />
+                {!collapsed && label}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
@@ -99,15 +109,15 @@ export function Sidebar({ activeChannels, activeStores, onToggleChannel, onToggl
                     onClick={() => onToggleChannel(ch.id)}
                     className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-sans font-medium transition-all text-left"
                     style={active ? {
-                      background: `${ch.color}18`,
-                      border: `1px solid ${ch.color}50`,
-                      color: ch.color,
+                      background: `${ch.color}22`,
+                      border: `1px solid ${ch.color}70`,
+                      color: 'var(--text-primary)',
                     } : {
                       border: '1px solid transparent',
                       color: 'var(--text-muted)',
                     }}
                   >
-                    {Icon && <Icon size={13} strokeWidth={2} />}
+                    {Icon && <Icon size={13} strokeWidth={2} style={active ? { color: ch.color } : undefined} />}
                     <span className="truncate">{ch.name}</span>
                   </button>
                 );
@@ -136,15 +146,15 @@ export function Sidebar({ activeChannels, activeStores, onToggleChannel, onToggl
                     onClick={() => onToggleStore(st.id)}
                     className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-sans font-medium transition-all text-left"
                     style={active ? {
-                      background: `${st.color}18`,
-                      border: `1px solid ${st.color}50`,
-                      color: st.color,
+                      background: `${st.color}22`,
+                      border: `1px solid ${st.color}70`,
+                      color: 'var(--text-primary)',
                     } : {
                       border: '1px solid transparent',
                       color: 'var(--text-muted)',
                     }}
                   >
-                    {Icon && <Icon size={13} strokeWidth={2} />}
+                    {Icon && <Icon size={13} strokeWidth={2} style={active ? { color: st.color } : undefined} />}
                     <span className="truncate">{st.name}</span>
                   </button>
                 );

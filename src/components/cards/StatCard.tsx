@@ -32,19 +32,12 @@ export function StatCard({ label, value, delta, trend, accentColor, icon }: Prop
     <div
       className="relative overflow-hidden rounded-xl p-4 flex flex-col gap-3 border border-border"
       style={{
-        background: `radial-gradient(ellipse 140% 100% at 0% 0%, ${accentColor}10 0%, transparent 55%), var(--bg-card)`,
+        background: `radial-gradient(ellipse 140% 100% at 0% 0%, ${accentColor}0c 0%, transparent 55%), var(--bg-card)`,
         boxShadow: `0 0 0 1px ${accentColor}1f, 0 1px 3px rgba(0,0,0,0.07), 0 6px 20px ${accentColor}0d`,
       }}
     >
       {/* Top accent bar */}
       <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: accentColor }} />
-      {/* Bottom accent bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: accentColor }} />
-      {/* Atmospheric bloom below bar */}
-      <div
-        className="absolute top-0 left-0 right-0 h-10 pointer-events-none"
-        style={{ background: `linear-gradient(to bottom, ${accentColor}1a, transparent)` }}
-      />
 
       {/* Zone 1: Label + Sparkline */}
       <div className="flex items-start justify-between gap-2 pt-1">
@@ -71,10 +64,7 @@ export function StatCard({ label, value, delta, trend, accentColor, icon }: Prop
       </div>
 
       {/* Separator */}
-      <div
-        className="h-px w-full"
-        style={{ background: `linear-gradient(to right, ${accentColor}2e, var(--border-c) 45%, transparent 80%)` }}
-      />
+      <div className="h-px w-full" style={{ background: 'var(--border-c)' }} />
 
       {/* Zone 3: Delta badge */}
       <div className="flex items-center gap-2">

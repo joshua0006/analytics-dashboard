@@ -6,11 +6,11 @@ import { formatDelta } from '../../utils/formatters';
 export interface Column<T> {
   key: keyof T & string;
   label: string;
-  render?: (value: T[keyof T], row: T) => React.ReactNode;
+  render?: (value: unknown, row: T) => React.ReactNode;
   align?: 'left' | 'right';
 }
 
-interface Props<T extends Record<string, unknown>> {
+interface Props<T extends object> {
   columns: Column<T>[];
   data: T[];
   rowKey: keyof T & string;
@@ -18,7 +18,7 @@ interface Props<T extends Record<string, unknown>> {
 
 type SortDir = 'asc' | 'desc';
 
-export function DataTable<T extends Record<string, unknown>>({ columns, data, rowKey }: Props<T>) {
+export function DataTable<T extends object>({ columns, data, rowKey }: Props<T>) {
   const [sortKey, setSortKey] = useState<string>(columns[0]?.key ?? '');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
@@ -32,8 +32,8 @@ export function DataTable<T extends Record<string, unknown>>({ columns, data, ro
   };
 
   const sorted = [...data].sort((a, b) => {
-    const av = a[sortKey];
-    const bv = b[sortKey];
+    const av = (a as Record<string, unknown>)[sortKey];
+    const bv = (b as Record<string, unknown>)[sortKey];
     const dir = sortDir === 'asc' ? 1 : -1;
     if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
     return String(av).localeCompare(String(bv)) * dir;
@@ -57,8 +57,8 @@ export function DataTable<T extends Record<string, unknown>>({ columns, data, ro
                   {col.label}
                   {sortKey === col.key
                     ? sortDir === 'desc'
-                      ? <ChevronDown size={10} className="text-accent-yt" />
-                      : <ChevronUp size={10} className="text-accent-yt" />
+                      ? <ChevronDown size={10} className="text-primary opacity-60" />
+                      : <ChevronUp size={10} className="text-primary opacity-60" />
                     : <ChevronDown size={10} className="opacity-20" />
                   }
                 </span>
@@ -69,7 +69,7 @@ export function DataTable<T extends Record<string, unknown>>({ columns, data, ro
         <tbody>
           {sorted.map((row, i) => (
             <tr
-              key={String(row[rowKey])}
+              key={String((row as Record<string, unknown>)[rowKey])}
               className={clsx(
                 'border-b border-border/50 hover:bg-surface/50 transition-colors',
                 i === sorted.length - 1 && 'border-b-0'
@@ -84,8 +84,8 @@ export function DataTable<T extends Record<string, unknown>>({ columns, data, ro
                   )}
                 >
                   {col.render
-                    ? col.render(row[col.key], row)
-                    : String(row[col.key] ?? '—')}
+                    ? col.render((row as Record<string, unknown>)[col.key], row)
+                    : String((row as Record<string, unknown>)[col.key] ?? '—')}
                 </td>
               ))}
             </tr>

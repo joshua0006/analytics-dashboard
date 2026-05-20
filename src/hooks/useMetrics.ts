@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { subDays, parseISO, isAfter } from 'date-fns';
 import { mockYouTubeData, mockStoreData } from '../data';
-import { DateRange, YouTubeDataPoint, StoreDataPoint } from '../types';
+import { DateRange, StoreDataPoint } from '../types';
 
 function cutoffDate(range: DateRange): Date {
   const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;

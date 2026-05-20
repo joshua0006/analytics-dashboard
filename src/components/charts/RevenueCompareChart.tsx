@@ -1,6 +1,6 @@
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, LineChart, Line, YAxis as YAxisType, PieChart, Pie, Cell, Legend,
+  Tooltip, LineChart, Line, PieChart, Pie, Cell,
 } from 'recharts';
 import { ChartTooltip } from '../ui/ChartTooltip';
 import { formatCurrency, formatNumber, formatPct } from '../../utils/formatters';

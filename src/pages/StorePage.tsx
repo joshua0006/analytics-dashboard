@@ -80,7 +80,7 @@ export function StorePage() {
             label="Revenue"
             value={formatCurrency(metrics.totalRevenue)}
             delta={metrics.deltaRevenue}
-            trend={metrics.last7Units.map((u, i) => metrics.last7Conv[i] ?? 0)}
+            trend={metrics.last7Units.map((_u, i) => metrics.last7Conv[i] ?? 0)}
             accentColor="#22d3c5"
             icon={<CreditCard size={14} />}
           />

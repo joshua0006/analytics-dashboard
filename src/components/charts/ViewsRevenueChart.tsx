@@ -1,6 +1,6 @@
 import {
   ResponsiveContainer, AreaChart, Area, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
 import { ChartTooltip } from '../ui/ChartTooltip';
 import { CHANNELS } from '../../data/mockYouTube';

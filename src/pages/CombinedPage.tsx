@@ -87,7 +87,7 @@ export function CombinedPage() {
     });
 
   const totalRevenue = ytMetrics.totalRevenue + storeMetrics.totalRevenue;
-  const prevTotal = 0; // simplified — show combined delta
+  void 0; // combined delta shown via individual metrics
 
   return (
     <div className="flex flex-col">
