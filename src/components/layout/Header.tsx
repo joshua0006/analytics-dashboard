@@ -27,9 +27,9 @@ export function Header({ title, subtitle, dateRange, onDateRangeChange, accentCo
           <Menu size={20} />
         </button>
         <div className="min-w-0">
-          <h1 className="font-mono text-sm md:text-base font-semibold text-primary tracking-tight truncate">{title}</h1>
+          <h1 className="font-mono text-sm md:text-base font-semibold tracking-tight truncate" style={{ color: 'var(--text-primary)' }}>{title}</h1>
           {subtitle && (
-            <p className="font-sans text-xs text-muted mt-0.5 hidden sm:block">{subtitle}</p>
+            <p className="font-sans text-xs mt-0.5 hidden sm:block" style={{ color: 'var(--text-muted)' }}>{subtitle}</p>
           )}
         </div>
       </div>
