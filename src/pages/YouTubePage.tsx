@@ -1,5 +1,5 @@
 import { useOutletContext } from 'react-router-dom';
-import { Eye, DollarSign, TrendingUp } from 'lucide-react';
+import { Eye, DollarSign } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { StatCard } from '../components/cards/StatCard';
 import { ViewsChart, RevenueLineChart } from '../components/charts/ViewsRevenueChart';
@@ -65,7 +65,7 @@ export function YouTubePage() {
 
       <div className="p-6 flex flex-col gap-6">
         {/* KPI row */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <StatCard
             label="Total Views"
             value={formatNumber(metrics.totalViews)}
@@ -81,14 +81,6 @@ export function YouTubePage() {
             trend={metrics.last7Revenue}
             accentColor="#f5a623"
             icon={<DollarSign size={14} />}
-          />
-          <StatCard
-            label="RPM"
-            value={'$' + metrics.rpm.toFixed(2)}
-            delta={metrics.deltaRpm}
-            trend={metrics.last7Revenue.map((r, i) => metrics.last7Views[i] > 0 ? (r / metrics.last7Views[i]) * 1000 : 0)}
-            accentColor="#f5a623"
-            icon={<TrendingUp size={14} />}
           />
         </div>
 

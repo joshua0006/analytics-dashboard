@@ -1,5 +1,5 @@
 import { useOutletContext } from 'react-router-dom';
-import { Package, CreditCard, Target, ShoppingCart } from 'lucide-react';
+import { Package, CreditCard, Target } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { StatCard } from '../components/cards/StatCard';
 import { UnitsSoldChart, ConversionRateChart } from '../components/charts/StoreMetricsChart';
@@ -67,7 +67,7 @@ export function StorePage() {
       />
 
       <div className="p-6 flex flex-col gap-6">
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <StatCard
             label="Units Sold"
             value={formatNumber(metrics.totalUnits)}
@@ -80,7 +80,7 @@ export function StorePage() {
             label="Revenue"
             value={formatCurrency(metrics.totalRevenue)}
             delta={metrics.deltaRevenue}
-            trend={metrics.last7Units.map((_u, i) => metrics.last7Conv[i] ?? 0)}
+            trend={metrics.last7Revenue}
             accentColor="#22d3c5"
             icon={<CreditCard size={14} />}
           />
@@ -91,14 +91,6 @@ export function StorePage() {
             trend={metrics.last7Conv}
             accentColor="#22d3c5"
             icon={<Target size={14} />}
-          />
-          <StatCard
-            label="Avg Order Value"
-            value={formatCurrency(metrics.avgOrderValue)}
-            delta={metrics.deltaAov}
-            trend={metrics.last7Units}
-            accentColor="#22d3c5"
-            icon={<ShoppingCart size={14} />}
           />
         </div>
 

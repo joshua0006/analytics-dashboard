@@ -141,6 +141,7 @@ export function useStoreMetrics(range: DateRange, activeStores: string[]) {
       }));
 
     const last7Units = chartData.slice(-7).map(d => d.units);
+    const last7Revenue = chartData.slice(-7).map(d => d.revenue);
     const last7Conv = chartData.slice(-7).map(d => d.convRate);
 
     const storeBreakdown = activeStores.map(sid => {
@@ -166,6 +167,7 @@ export function useStoreMetrics(range: DateRange, activeStores: string[]) {
       deltaAov: delta(avgOrderValue, prevAov),
       chartData,
       last7Units,
+      last7Revenue,
       last7Conv,
       storeBreakdown,
     };
