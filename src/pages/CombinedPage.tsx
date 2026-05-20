@@ -18,10 +18,11 @@ interface OutletCtx {
   setDateRange: (v: DateRange) => void;
   activeChannels: string[];
   activeStores: string[];
+  onMenuClick: () => void;
 }
 
 export function CombinedPage() {
-  const { dateRange, setDateRange, activeChannels, activeStores } = useOutletContext<OutletCtx>();
+  const { dateRange, setDateRange, activeChannels, activeStores, onMenuClick } = useOutletContext<OutletCtx>();
   const ytMetrics = useYouTubeMetrics(dateRange, activeChannels);
   const storeMetrics = useStoreMetrics(dateRange, activeStores);
 
@@ -97,11 +98,12 @@ export function CombinedPage() {
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
         accentColor="#a78bfa"
+        onMenuClick={onMenuClick}
       />
 
-      <div className="p-6 flex flex-col gap-6">
+      <div className="p-3 md:p-4 lg:p-6 flex flex-col gap-4 md:gap-6">
         {/* KPI row */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="YT Views"
             value={formatNumber(ytMetrics.totalViews)}
@@ -138,7 +140,7 @@ export function CombinedPage() {
 
         <RevenueStackedBar data={stackedData} />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <RevenueDonut data={ytDonutData} title="YT Revenue by Channel" />
           <RevenueDonut data={storeDonutData} title="Store Revenue by Store" />
         </div>

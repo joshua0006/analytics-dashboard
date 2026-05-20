@@ -13,6 +13,7 @@ interface OutletCtx {
   dateRange: DateRange;
   setDateRange: (v: DateRange) => void;
   activeChannels: string[];
+  onMenuClick: () => void;
 }
 
 interface BreakdownRow {
@@ -45,7 +46,7 @@ const columns: Column<BreakdownRow>[] = [
 ];
 
 export function YouTubePage() {
-  const { dateRange, setDateRange, activeChannels } = useOutletContext<OutletCtx>();
+  const { dateRange, setDateRange, activeChannels, onMenuClick } = useOutletContext<OutletCtx>();
   const metrics = useYouTubeMetrics(dateRange, activeChannels);
 
   const tableData: BreakdownRow[] = metrics.channelBreakdown.map(b => ({
@@ -61,11 +62,12 @@ export function YouTubePage() {
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
         accentColor="#f5a623"
+        onMenuClick={onMenuClick}
       />
 
-      <div className="p-6 flex flex-col gap-6">
+      <div className="p-3 md:p-4 lg:p-6 flex flex-col gap-4 md:gap-6">
         {/* KPI row */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <StatCard
             label="Total Views"
             value={formatNumber(metrics.totalViews)}

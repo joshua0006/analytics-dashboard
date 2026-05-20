@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Youtube, ShoppingBag,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, X,
   Sprout, Zap, Truck, Leaf, ChartBar,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -16,6 +16,8 @@ interface Props {
   onToggleStore: (id: string) => void;
   onToggleAllChannels: () => void;
   onToggleAllStores: () => void;
+  mobileOpen?: boolean;
+  onClose?: () => void;
 }
 
 const navItems = [
@@ -38,7 +40,7 @@ const STORE_ICONS: Record<string, AnyIcon> = {
   'st-002': ShoppingBag,
 };
 
-export function Sidebar({ activeChannels, activeStores, onToggleChannel, onToggleStore, onToggleAllChannels, onToggleAllStores }: Props) {
+export function Sidebar({ activeChannels, activeStores, onToggleChannel, onToggleStore, onToggleAllChannels, onToggleAllStores, mobileOpen, onClose }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const { pathname } = useLocation();
   const showChannels = pathname === '/youtube' || pathname === '/combined';
@@ -48,6 +50,8 @@ export function Sidebar({ activeChannels, activeStores, onToggleChannel, onToggl
     <aside
       className={clsx(
         'flex flex-col h-screen border-r border-border bg-surface transition-all duration-200 shrink-0',
+        'fixed inset-y-0 left-0 z-30 md:relative md:z-auto md:translate-x-0',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         collapsed ? 'w-14' : 'w-56'
       )}
     >
@@ -58,6 +62,15 @@ export function Sidebar({ activeChannels, activeStores, onToggleChannel, onToggl
         </div>
         {!collapsed && (
           <span className="font-mono text-xs font-semibold text-primary tracking-wider uppercase">Analytics</span>
+        )}
+        {!collapsed && (
+          <button
+            onClick={onClose}
+            className="ml-auto md:hidden text-muted hover:text-primary transition-colors"
+            aria-label="Close menu"
+          >
+            <X size={16} />
+          </button>
         )}
       </div>
 

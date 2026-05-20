@@ -41,6 +41,7 @@ export function DataTable<T extends object>({ columns, data, rowKey }: Props<T>)
 
   return (
     <div className="rounded-lg border border-border bg-card overflow-hidden">
+      <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
           <tr className="border-b border-border">
@@ -92,6 +93,7 @@ export function DataTable<T extends object>({ columns, data, rowKey }: Props<T>)
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

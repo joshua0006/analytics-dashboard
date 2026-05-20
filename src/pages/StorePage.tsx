@@ -13,6 +13,7 @@ interface OutletCtx {
   dateRange: DateRange;
   setDateRange: (v: DateRange) => void;
   activeStores: string[];
+  onMenuClick: () => void;
 }
 
 interface BreakdownRow {
@@ -48,7 +49,7 @@ const columns: Column<BreakdownRow>[] = [
 ];
 
 export function StorePage() {
-  const { dateRange, setDateRange, activeStores } = useOutletContext<OutletCtx>();
+  const { dateRange, setDateRange, activeStores, onMenuClick } = useOutletContext<OutletCtx>();
   const metrics = useStoreMetrics(dateRange, activeStores);
 
   const tableData: BreakdownRow[] = metrics.storeBreakdown.map(b => ({
@@ -64,10 +65,11 @@ export function StorePage() {
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
         accentColor="#22d3c5"
+        onMenuClick={onMenuClick}
       />
 
-      <div className="p-6 flex flex-col gap-6">
-        <div className="grid grid-cols-3 gap-4">
+      <div className="p-3 md:p-4 lg:p-6 flex flex-col gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
             label="Units Sold"
             value={formatNumber(metrics.totalUnits)}
